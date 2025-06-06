@@ -3,7 +3,7 @@ version: "3.8"
 services:
   
     build: ./nginx
-    image: nginx
+    image: alyeeumair26/notes-app
     container_name: "nginx_cont"
     ports:
       - "80:80"
