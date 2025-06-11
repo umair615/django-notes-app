@@ -1,5 +1,3 @@
-
-
 pipeline {
     agent any
 
@@ -8,6 +6,7 @@ pipeline {
         SLACK_TOKEN = credentials('SLACK_BOT_TOKEN')
     }
 
+    stages {
         stage('Clone Repo') {
             steps {
                 git url: 'https://github.com/umair615/django-notes-app.git', branch: 'main'
