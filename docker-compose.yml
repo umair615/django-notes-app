@@ -1,9 +1,8 @@
 version: "3.8"
 
 services:
-  
-    build: ./nginx
-    image: alyeeumair26/notes-app:{GIT-COMMIT-ID}
+  nginx:
+    image: 281025883862.dkr.ecr.us-east-1.amazonaws.com/myapp/repo/nginx:${IMAGE_TAG}
     container_name: "nginx_cont"
     ports:
       - "80:80"
@@ -14,9 +13,7 @@ services:
       - notes-app-nw
 
   django_app:
-    build:
-      context: .
-    image: django_app
+    image: 281025883862.dkr.ecr.us-east-1.amazonaws.com/myapp/repo/django:${IMAGE_TAG}
     container_name: "django_cont"
     ports:
       - "8000:8000"
