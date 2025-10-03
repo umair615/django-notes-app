@@ -1,53 +1,53 @@
-version: "3.8"
+#version: "3.9"
 
 services:
-  nginx:
-    image: 281025883862.dkr.ecr.us-east-1.amazonaws.com/myapp/repo/nginx:${IMAGE_TAG}
-    container_name: "nginx_cont"
+  db:
+    image: mysql:8.0
+    container_name: notes-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: notes
+      MYSQL_USER: notesuser
+      MYSQL_PASSWORD: notepass
+      MYSQL_ROOT_PASSWORD: rootpass
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app-network
+
+  django_app:
+    image: 569034625244.dkr.ecr.us-east-1.amazonaws.com/myapp/repo-django:${IMAGE_TAG}
+    container_name: django-app
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_NAME: notes
+      DB_USER: notesuser
+      DB_PASS: notepass
     ports:
-      - "80:80"
+      - "8000:8000"
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn django_notes_app.wsgi:application --bind 0.0.0.0:8000"
+    networks:
+      - app-network
+
+  nginx:
+    image: 569034625244.dkr.ecr.us-east-1.amazonaws.com/myapp/repo-nginx:${IMAGE_TAG}
+    container_name: nginx
     restart: always
     depends_on:
       - django_app
-    networks:
-      - notes-app-nw
-
-  django_app:
-    image: 281025883862.dkr.ecr.us-east-1.amazonaws.com/myapp/repo/django:${IMAGE_TAG}
-    container_name: "django_cont"
     ports:
-      - "8000:8000"
-    command: sh -c "python manage.py migrate --noinput && gunicorn notesapp.wsgi --bind 0.0.0.0:8000"
-    env_file:
-      - ".env"
-    depends_on:
-      - db
-    restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/admin || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      - "80:80"
     networks:
-      - notes-app-nw
+      - app-network
 
-  db:
-    image: mysql
-    container_name: "db_cont"
-    environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=test_db
-    volumes:
-      - ./data/mysql/db:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-    networks:
-      - notes-app-nw
+volumes:
+  db_data:
 
 networks:
-  notes-app-nw:
+  app-network:
+    driver: bridge
